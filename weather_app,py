@@ -1,0 +1,200 @@
+import os
+import random
+import datetime
+import difflib
+
+# ---------------- USER CONFIG ----------------
+USERNAME = "Aditi"
+PASSWORD = "15679"  # Optional: remove check_password() if not needed
+MOOD_LOG_FILE = "mood_log.txt"
+STREAK_FILE = "weatherstory_streak.txt"
+JOURNAL_FILE = "journal_notes.txt"
+# ---------------------------------------------
+
+VALID_MOODS = {
+    "happy", "sad", "tired", "excited", "angry", "anxious", "hopeful", "lost"
+}
+
+def check_password():
+    entered = input("Enter your password to begin: ")
+    if entered != PASSWORD:
+        print("❌ Incorrect password. Access denied.")
+        exit()
+
+def get_user_mood():
+    while True:
+        mood = input("How are you feeling today (happy, tired, sad, excited...)? ").strip().lower()
+        if mood in VALID_MOODS:
+            return mood
+        else:
+            print("⚠ Please enter a valid mood from:", ", ".join(VALID_MOODS))
+
+def mood_reflection(mood):
+    reflections = {
+        "happy": "Today everything feels a little brighter — just like your mood 🌼",
+        "sad": "Even broken days bring a new sunrise. Breathe, you're not alone.",
+        "tired": "Fatigue is a message — maybe today is for rest 💤",
+        "excited": "Your heart is glowing — ride that spark ⚡",
+        "angry": "Anger is power. Let it build, not burn.",
+        "anxious": "Even if the winds are wild, stay grounded 🌱",
+        "hopeful": "Hope is a tiny flame — protect it gently.",
+        "lost": "Even a compass takes a moment to settle. You’re still whole.",
+    }
+    return reflections.get(mood, "Thanks for sharing. You showed up — that matters.")
+
+def simulate_weather():
+    weather_types = ["Sunny", "Rainy", "Cloudy", "Windy", "Stormy", "Snowy"]
+    return random.choice(weather_types)
+
+def ascii_art(weather):
+    art_map = {
+        "Sunny": " \\   / \n  .-.  \n ‒ (   ) ‒\n  `-’  \n /   \\",
+        "Rainy": ".-.     \n(   ).   \n((_)  <- rain",
+        "Cloudy": "      .--.\n   .-(    ).\n  (.)_) <- clouds",
+        "Windy": "~ ~ ~ ~ ~ <- breezy winds",
+        "Stormy": "⚡⚡⚡ Thunder ⚡⚡⚡",
+        "Snowy": "* * * Snow falling * * *",
+    }
+    return art_map.get(weather, "[No art available]")
+
+def get_poem_line(mood, weather):
+    mood_adjectives = {
+        "happy": "bright",
+        "sad": "heavy",
+        "tired": "quiet",
+        "excited": "sparkling",
+        "angry": "fiery",
+        "anxious": "restless",
+        "hopeful": "light",
+        "lost": "wandering"
+    }
+    templates = [
+        f"Today the sky is {weather.lower()}, and your heart feels {mood_adjectives.get(mood, mood)}.",
+        f"{weather} winds blow gently, carrying your {mood_adjectives.get(mood, mood)} thoughts.",
+        f"Even in a {weather.lower()} world, your {mood_adjectives.get(mood, mood)} spirit shines.",
+        f"{mood.capitalize()} hearts walk through {weather.lower()} days like soft poems."
+    ]
+    return random.choice(templates)
+
+def show_special_quote():
+    quotes = [
+        "Be kind to yourself — even clouds don't rush the sun.",
+        "Every feeling is a visitor. Greet it, feel it, let it go.",
+        "You're not behind. You're on your own timeline.",
+        "No matter the weather, you’re still the sky.",
+        "Your presence is enough. Always has been.",
+    ]
+    return random.choice(quotes)
+
+def update_mood_log(mood):
+    today = datetime.date.today().isoformat()
+    with open(MOOD_LOG_FILE, "a") as f:
+        f.write(f"{today},{mood}\n")
+
+def read_mood_history():
+    if not os.path.exists(MOOD_LOG_FILE):
+        return []
+    with open(MOOD_LOG_FILE, "r") as f:
+        lines = f.readlines()
+    return [line.strip().split(",") for line in lines[-7:]]
+
+def display_streak():
+    today = datetime.date.today().isoformat()
+    if not os.path.exists(STREAK_FILE):
+        with open(STREAK_FILE, "w") as f:
+            f.write(f"{today},1")
+        return 1
+    with open(STREAK_FILE, "r") as f:
+        last_date, streak = f.read().strip().split(",")
+    last_date = datetime.datetime.strptime(last_date, "%Y-%m-%d").date()
+    if today == str(last_date + datetime.timedelta(days=1)):
+        streak = int(streak) + 1
+    elif today != str(last_date):
+        streak = 1
+    with open(STREAK_FILE, "w") as f:
+        f.write(f"{today},{streak}")
+    return streak
+
+def guessing_game(actual_weather):
+    guess = input("Guess today’s weather (Sunny, Rainy, etc.): ").strip().capitalize()
+    if guess == actual_weather:
+        print("🎉 You guessed it right! Psychic vibes?")
+    else:
+        close = difflib.get_close_matches(guess, [actual_weather])
+        if close:
+            print(f"Almost! It’s actually {actual_weather}. But close call 👀")
+        else:
+            print(f"Not quite. The weather is {actual_weather}. Try again tomorrow!")
+
+def mood_prompt(mood):
+    prompts = {
+        "happy": "What made you smile today?",
+        "sad": "What’s been weighing on your heart?",
+        "tired": "Where does your energy feel stuck?",
+        "excited": "What are you looking forward to?",
+        "anxious": "What’s spinning in your thoughts today?",
+        "hopeful": "What’s a small thing you're hopeful about?",
+        "lost": "What might help you feel a bit more grounded?",
+        "angry": "What truth is hidden beneath that anger?",
+    }
+    return prompts.get(mood, "Write a few lines about what’s on your mind.")
+
+def write_journal_entry(mood, weather):
+    today = datetime.date.today().isoformat()
+    choice = input("Would you like to write a short journal note? (yes/no): ").strip().lower()
+    if choice == "yes":
+        note = input("Write your note here:\n")
+        with open(JOURNAL_FILE, "a") as f:
+            f.write(f"{today} | Mood: {mood} | Weather: {weather} | Note: {note}\n")
+        print("✅ Your note has been saved.")
+
+def draw_mood_trend(history):
+    print("\n📊 Your 7-Day Mood Trend:")
+    mood_counts = {}
+    for date, mood in history:
+        mood_counts[mood] = mood_counts.get(mood, 0) + 1
+    for mood, count in mood_counts.items():
+        print(f"{mood.capitalize():<10}: {'█' * count} ({count})")
+
+def easter_egg():
+    if random.random() < 0.1:
+        print("\n🌸 Hidden Message: The sky holds space for all your seasons.\n")
+
+# ---------------- MAIN ----------------
+
+def main():
+    check_password()
+    print(f"\nWelcome, {USERNAME}! 🌤 Let's begin your weather story.\n")
+
+    mood = get_user_mood()
+    reflection = mood_reflection(mood)
+    update_mood_log(mood)
+    streak = display_streak()
+    weather = simulate_weather()
+
+    print("\nYour Reflection:\n" + reflection)
+    print("\nASCII Weather Art:\n" + ascii_art(weather))
+    print("\nPoem of the Day:\n" + get_poem_line(mood, weather))
+    print("\nQuote to Keep:\n" + show_special_quote())
+    print(f"\nCurrent Streak: {streak} day(s) 📅")
+
+    guessing_game(weather)
+
+    history = read_mood_history()
+    if history:
+        print("\n🧠 Your Mood Log (Last 7 Days):")
+        for date, mood in history:
+            print(f"{date} → {mood}")
+        draw_mood_trend(history)
+
+    print("\n📝 Prompt for You: " + mood_prompt(mood))
+    write_journal_entry(mood, weather)
+    easter_egg()
+
+    print("\n🌈 Thank you for showing up today, Aditi. This story belongs to you.")
+    print("\n🌈 Have a wonderful day, Aditi!")
+    print("\n🌈 Every day is a new chance. Keep moving forward!")
+
+
+if __name__ == "__main__":
+    main()
